@@ -23,6 +23,11 @@ public abstract class PlanObject : DomainObject
 
     public Rect Footprint => Rect.FromCenter(X, Z, Width, Depth);
 
+    /// <summary>
+    /// Gets a value indicating whether the object stands on the floor.
+    /// <see langword="true"/>: the object stands on the floor (for example, furniture), so the placement validator checks it.
+    /// <see langword="false"/>: the object does not stand on the floor (for example, a door or a window in a wall), so the placement validator does not check it.
+    /// </summary>
     public virtual bool OccupiesFloor => true;
 
     protected PlanObject()
