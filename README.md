@@ -25,3 +25,30 @@ The API uses [Swashbuckle.AspNetCore](https://github.com/domaindrivendev/Swashbu
 - The raw OpenAPI description (JSON): http://localhost:5080/swagger/v1/swagger.json
 
 Swagger is controlled by the `Swagger:Enabled` setting. It is `true` in `appsettings.Development.json` (the default for `dotnet run`) and `false` in `appsettings.json`. To enable it in another environment, set the environment variable `Swagger__Enabled=true`.
+
+## Database
+
+The schema is created by the EF Core migration `Initial` (`src/FloorPlanner.Api/Data/Migrations`). With `Database:MigrateOnStartup` set to `true` the application applies it at startup.
+
+Tables after the first start (`docker exec -it floorplanner-db psql -U floorplanner -d floorplanner -c "\dt"`):
+
+```text
+                   List of relations
+ Schema |         Name          | Type  |    Owner
+--------+-----------------------+-------+--------------
+ public | __EFMigrationsHistory | table | floorplanner
+ public | floor_plans           | table | floorplanner
+ public | plan_objects          | table | floorplanner
+ public | rooms                 | table | floorplanner
+(4 rows)
+```
+
+All plan objects (furniture, doors, windows) share the `plan_objects` table (table per hierarchy); the `kind` column holds the discriminator and `category` is filled only for furniture. The room corners are stored in `rooms.corners` as `jsonb`:
+
+```text
+ Table "public.plan_objects"            Table "public.rooms"
+  Column  |          Type                 Column    |          Type
+----------+------------------------    ---------------+------------------------
+ kind     | character varying(13)        corners       | jsonb
+ category | character varying(50)
+```

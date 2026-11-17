@@ -7,7 +7,7 @@ public sealed class FloorPlan : DomainObject
 
     public DateTime CreatedAt { get; private set; }
 
-    public List<Room> Rooms { get; } = new();
+    public List<Room> Rooms { get; } = [];
 
     public FloorPlan(string name)
     {

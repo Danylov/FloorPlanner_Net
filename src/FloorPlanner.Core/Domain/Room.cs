@@ -9,13 +9,15 @@ public sealed class Room : DomainObject
 
     public int FloorPlanId { get; private set; }
 
+    public FloorPlan? FloorPlan { get; private set; }
+
     public string Name { get; private set; } = string.Empty;
 
     public double Height { get; private set; }
 
     public List<Vector2> Corners { get; private set; } = [];
 
-    public List<PlanObject> Objects { get; } = new();
+    public List<PlanObject> Objects { get; } = [];
 
     public Room(string name, IEnumerable<Vector2> corners, double height = 2.7)
     {

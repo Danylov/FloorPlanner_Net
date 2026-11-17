@@ -21,6 +21,8 @@ public abstract class PlanObject : DomainObject
 
     public int RoomId { get; protected set; }
 
+    public Room? Room { get; private set; }
+
     public Rect Footprint => Rect.FromCenter(X, Z, Width, Depth);
 
     /// <summary>
