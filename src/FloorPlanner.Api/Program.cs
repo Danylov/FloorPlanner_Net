@@ -1,4 +1,6 @@
 using FloorPlanner.Api.Data;
+using FloorPlanner.Core.Abstractions;
+using FloorPlanner.Core.Placement;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,7 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 string connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("Connection string 'Default' is not configured.");
 
-builder.Services.AddDbContext<AppDbContext>(o => o.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
+builder.Services.AddDbContext<AppDbContext>(o => o.UseNpgsql(connectionString).UseSnakeCaseNamingConvention()); // IoC container setup: dependency registration, Scoped
+
+builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>)); // IoC container setup: dependency registration, Scoped: interface -> implementation
+builder.Services.AddSingleton<IPlacementValidator, PlacementValidator>(); // IoC container setup: dependency registration, Singleton: no state
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

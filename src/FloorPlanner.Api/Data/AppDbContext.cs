@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FloorPlanner.Api.Data;
 
 /// <summary>The EF Core database context of the floor planner.</summary>
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options) // Constructor injection (DI): the container passes the options
 {
     public DbSet<FloorPlan> FloorPlans => Set<FloorPlan>();
 
