@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FloorPlanner.Core\FloorPlanner.Core.csproj" />
+    <ProjectReference Include="..\..\src\FloorPlanner.Api\FloorPlanner.Api.csproj" />
   </ItemGroup>
 
 </Project>

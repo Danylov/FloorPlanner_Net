@@ -1,4 +1,5 @@
 using FloorPlanner.Api.Data;
+using FloorPlanner.Api.Middleware;
 using FloorPlanner.Core.Abstractions;
 using FloorPlanner.Core.Placement;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,10 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
 
     await db.Database.MigrateAsync(app.Lifetime.ApplicationStopping);
 }
+
+// Pipeline order: the exception handler goes first so that it catches exceptions thrown by every later layer;
+// then Swagger; then the controllers.
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
