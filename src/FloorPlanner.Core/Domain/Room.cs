@@ -1,4 +1,5 @@
 using FloorPlanner.Core.Geometry;
+using JetBrains.Annotations;
 
 namespace FloorPlanner.Core.Domain;
 
@@ -7,8 +8,10 @@ public sealed class Room : DomainObject
 {
     private const int MaxNameLength = 100;
 
+    [UsedImplicitly] // The setter is called by EF Core when it fills the foreign key.
     public int FloorPlanId { get; private set; }
 
+    [UsedImplicitly] // The setter is called by EF Core when it loads the related plan.
     public FloorPlan? FloorPlan { get; private set; }
 
     public string Name { get; private set; } = string.Empty;
@@ -24,6 +27,7 @@ public sealed class Room : DomainObject
         Update(name, corners, height);
     }
 
+    [UsedImplicitly] // Called by EF Core through reflection.
     private Room()
     {
     }

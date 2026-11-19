@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace FloorPlanner.Core.Domain;
 
 /// <summary>A floor plan: a named collection of rooms.</summary>
@@ -15,11 +17,12 @@ public sealed class FloorPlan : DomainObject
         CreatedAt = DateTime.UtcNow;
     }
 
+    [UsedImplicitly] // Called by EF Core through reflection.
     private FloorPlan()
     {
     }
     
-    private void Rename(string name)
+    public void Rename(string name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 

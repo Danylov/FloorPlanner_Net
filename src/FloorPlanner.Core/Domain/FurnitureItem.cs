@@ -1,4 +1,5 @@
 using System.Globalization;
+using JetBrains.Annotations;
 
 namespace FloorPlanner.Core.Domain;
 
@@ -16,6 +17,7 @@ public sealed class FurnitureItem : PlanObject
         Category = category;
     }
 
+    [UsedImplicitly] // Called by EF Core through reflection.
     private FurnitureItem()
     {
     }
