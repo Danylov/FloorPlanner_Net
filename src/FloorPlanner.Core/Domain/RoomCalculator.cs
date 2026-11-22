@@ -44,7 +44,7 @@ public static class RoomCalculator
     }
 
     /// <summary>Calculates the floor area of a room using the Gauss (shoelace) formula.</summary>
-    private static double Area(Room room)
+    public static double Area(Room room)
     {
         ArgumentNullException.ThrowIfNull(room);
 
