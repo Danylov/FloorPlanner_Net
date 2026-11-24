@@ -45,6 +45,16 @@ public sealed class ExceptionHandlingMiddlewareTests
         Assert.Equal(StatusCodes.Status409Conflict, context.Response.StatusCode);
     }
 
+    /// <summary>A malformed request (BadHttpRequestException) is converted to 400, because it is a client error and not a server error.</summary>
+    [Fact]
+    public async Task InvokeAsync_BadHttpRequestException_Returns400()
+    {
+        (DefaultHttpContext context, string body) = await InvokeAsync(new BadHttpRequestException("Required parameter was not provided."));
+
+        Assert.Equal(StatusCodes.Status400BadRequest, context.Response.StatusCode);
+        Assert.Contains("Required parameter was not provided.", body);
+    }
+
     /// <summary>An unexpected exception is converted to 500 and its text is not exposed to the client.</summary>
     [Fact]
     public async Task InvokeAsync_UnexpectedException_Returns500WithoutExceptionText()
@@ -55,7 +65,7 @@ public sealed class ExceptionHandlingMiddlewareTests
         Assert.DoesNotContain("secret", body);
     }
 
-    /// <summary>A cancelled request is converted to 499 and the exception does not escape.</summary>
+    /// <summary>A canceled request is converted to 499 and the exception does not escape.</summary>
     [Fact]
     public async Task InvokeAsync_CancelledByClient_Returns499()
     {

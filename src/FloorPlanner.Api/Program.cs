@@ -59,8 +59,9 @@ if (app.Configuration.GetValue<bool>("Swagger:Enabled"))
 }
 
 // Registration of the endpoints (the routes that the pipeline ends with): MapControllers adds the routes of the controller
-// classes (health, floor plans, rooms); MapFurnitureEndpoints adds the Minimal API routes of the furniture.
+// classes (health, floor plans, rooms); MapFurnitureEndpoints and MapFurnitureSearchEndpoints add the Minimal API routes of the furniture.
 app.MapControllers();
 app.MapFurnitureEndpoints();
+app.MapFurnitureSearchEndpoints();
 
 app.Run();

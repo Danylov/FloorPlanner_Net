@@ -1,3 +1,4 @@
+using FloorPlanner.Api.Dtos;
 using FloorPlanner.Core.Domain;
 
 namespace FloorPlanner.Api.Services;
@@ -14,4 +15,8 @@ public interface IFurnitureService
     Task<FurnitureItem> UpdateAsync(int roomId, int id, FurnitureSpec spec, CancellationToken ct = default);
 
     Task DeleteAsync(int roomId, int id, CancellationToken ct = default);
+
+    Task<PagedResult<FurnitureSearchItemDto>> SearchAsync(FurnitureSearchQuery query, CancellationToken ct = default);
+
+    Task<IReadOnlyList<FurnitureSearchItemDto>> ListByPlanAsync(int planId, CancellationToken ct = default);
 }

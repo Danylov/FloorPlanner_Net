@@ -34,16 +34,28 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
 
         switch (ex)
         {
+            // Occurs when the client closes the connection or cancels the request before the answer is ready
+            // (the cancellation token of the request is triggered). Nobody waits for an answer, so only the status 499 is set.
             case OperationCanceledException when context.RequestAborted.IsCancellationRequested:
                 logger.LogInformation("Request {Method} {Path} was cancelled by the client", method, path);
                 context.Response.StatusCode = ClientClosedRequestStatusCode;
                 return;
 
+            // Occurs when the request itself is malformed: a required parameter is missing, the JSON body cannot be read, etc.
+            // It is a client error, not a server error.
+            case BadHttpRequestException badRequest:
+                logger.LogWarning("Request {Method} {Path} failed: {Message}", method, path, ex.Message);
+                await WriteAsync(context, CreateProblem(context, badRequest.StatusCode, "Bad request", ex.Message));
+                return;
+
+            // Occurs when the requested entity does not exist: a floor plan, a room or a piece of furniture with such an id.
             case NotFoundException:
                 logger.LogWarning("Request {Method} {Path} failed: {Message}", method, path, ex.Message);
                 await WriteAsync(context, CreateProblem(context, StatusCodes.Status404NotFound, "Resource not found", ex.Message));
                 return;
 
+            // Occurs when a domain rule is violated; for example, PlacementException when the furniture is outside the room
+            // or overlaps another item. NotFoundException is not caught here: it is handled by the case above.
             case DomainException domainException:
                 logger.LogWarning("Request {Method} {Path} failed: {Message}", method, path, ex.Message);
                 ProblemDetails problem = CreateProblem(context, StatusCodes.Status409Conflict, "Domain rule violated", ex.Message);
@@ -57,6 +69,8 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
                 await WriteAsync(context, problem);
                 return;
 
+            // Occurs for any other exception: a bug or a failure of the server (for example, the database is unavailable).
+            // The text of the exception is logged but not sent to the client.
             default:
                 logger.LogError(ex, "Unexpected error while processing {Method} {Path}", method, path);
                 await WriteAsync(context, CreateProblem(context, StatusCodes.Status500InternalServerError, "Unexpected error", "An unexpected error occurred."));

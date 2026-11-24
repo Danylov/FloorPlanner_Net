@@ -1,7 +1,10 @@
+using System.Linq.Expressions;
+using FloorPlanner.Api.Dtos;
 using FloorPlanner.Core.Abstractions;
 using FloorPlanner.Core.Domain;
 using FloorPlanner.Core.Exceptions;
 using FloorPlanner.Core.Placement;
+using Microsoft.EntityFrameworkCore;
 
 namespace FloorPlanner.Api.Services;
 
@@ -22,16 +25,19 @@ namespace FloorPlanner.Api.Services;
 // The price is that the layers are not uniform: furniture has three layers, floor plans and rooms have two.
 // For simple CRUD this is acceptable (no extra layer without a reason).
 //
-// How this service relates to FurnitureEndpoints: every public method here is called by the corresponding handler
-// in Endpoints/FurnitureEndpoints.cs. The handler receives the HTTP request, converts it to the values the service needs
-// (FurnitureSpec), calls the service, and converts the result to a DTO and an HTTP response.
+// How this service relates to the endpoints: every public method here is called by the corresponding handler
+// in Endpoints/FurnitureEndpoints.cs or Endpoints/FurnitureSearchEndpoints.cs. The handler receives the HTTP request,
+// converts it to the values the service needs (FurnitureSpec or FurnitureSearchQuery), calls the service,
+// and converts the result to a DTO and an HTTP response.
 // The methods are not duplicates: the handlers know about HTTP, this service does not.
 //
-//   FurnitureEndpoints.GetAllAsync   -> FurnitureService.ListAsync
-//   FurnitureEndpoints.GetByIdAsync  -> FurnitureService.GetAsync
-//   FurnitureEndpoints.CreateAsync   -> FurnitureService.CreateAsync
-//   FurnitureEndpoints.UpdateAsync   -> FurnitureService.UpdateAsync
-//   FurnitureEndpoints.DeleteAsync   -> FurnitureService.DeleteAsync
+//   FurnitureEndpoints.GetAllAsync              -> FurnitureService.ListAsync
+//   FurnitureEndpoints.GetByIdAsync             -> FurnitureService.GetAsync
+//   FurnitureEndpoints.CreateAsync              -> FurnitureService.CreateAsync
+//   FurnitureEndpoints.UpdateAsync              -> FurnitureService.UpdateAsync
+//   FurnitureEndpoints.DeleteAsync              -> FurnitureService.DeleteAsync
+//   FurnitureSearchEndpoints.SearchAsync        -> FurnitureService.SearchAsync
+//   FurnitureSearchEndpoints.ListByPlanAsync    -> FurnitureService.ListByPlanAsync
 
 /// <summary>Creates, reads, updates and deletes the furniture of a room and checks the placement rules.</summary>
 public sealed class FurnitureService(
@@ -119,6 +125,72 @@ public sealed class FurnitureService(
 
         await rooms.SaveChangesAsync(ct);
     }
+
+    /// <summary>
+    /// Searches the furniture of all the plans by category, with sorting and paging. The room and the plan are returned
+    /// only to be shown next to the found item; there are no filters by room or plan.
+    /// </summary>
+    public async Task<PagedResult<FurnitureSearchItemDto>> SearchAsync(FurnitureSearchQuery query, CancellationToken ct = default)
+    {
+        // Step 1: the starting query. objects.Query() is all the objects of the plans (furniture, doors and windows),
+        // and OfType<FurnitureItem>() keeps only the furniture. Nothing is read from the database yet:
+        // this is only the description of a query, which the next steps extend.
+        IQueryable<FurnitureItem> furniture = objects.Query().OfType<FurnitureItem>();
+
+        // Step 2: the filter by category, only if the client has specified one. The case is ignored: both the stored category
+        // and the requested one are converted to lower case (the requested one is converted in advance, in C#).
+        if (!string.IsNullOrWhiteSpace(query.Category))
+        {
+            string categoryLower = query.Category.ToLowerInvariant();
+
+            furniture = furniture.Where(f => f.Category.ToLower() == categoryLower);
+        }
+
+        // Step 3: the total number of the found items. The first request to the database (SELECT COUNT).
+        // It is counted before the paging, so that the client knows how many items were found in all the pages.
+        int totalCount = await furniture.CountAsync(ct);
+
+        // Step 4: the sort order, chosen by the sort parameter (the minus sign means descending order). The second key, Id,
+        // makes the order stable: items with the same name or area always go in the same order, so the pages do not overlap.
+        IOrderedQueryable<FurnitureItem> ordered = query.Sort switch
+        {
+            "name" => furniture.OrderBy(f => f.Name).ThenBy(f => f.Id),
+            "-name" => furniture.OrderByDescending(f => f.Name).ThenBy(f => f.Id),
+            "area" => furniture.OrderBy(f => f.Width * f.Depth).ThenBy(f => f.Id),
+            "-area" => furniture.OrderByDescending(f => f.Width * f.Depth).ThenBy(f => f.Id),
+            _ => throw new ArgumentException($"Unknown sort order '{query.Sort}'.", nameof(query)),
+        };
+
+        // Step 5: the requested page. Skip drops the items of the previous pages, Take leaves not more than PageSize items,
+        // Select converts every item to the DTO (together with the room and the plan names). The second request to the database
+        // (SELECT ... LIMIT ... OFFSET ...) is executed here, by ToListAsync.
+        List<FurnitureSearchItemDto> items = await ordered
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .Select(SearchItemProjection)
+            .ToListAsync(ct);
+
+        // Step 6: the page together with the paging data, which the client needs to ask for the other pages.
+        return new PagedResult<FurnitureSearchItemDto>(items, query.Page, query.PageSize, totalCount);
+    }
+
+    /// <summary>Returns all the furniture of a floor plan (from all its rooms), without paging.</summary>
+    public async Task<IReadOnlyList<FurnitureSearchItemDto>> ListByPlanAsync(int planId, CancellationToken ct = default)
+    {
+        return await objects.Query()
+            .OfType<FurnitureItem>()
+            .Where(f => f.Room!.FloorPlanId == planId)
+            .OrderBy(f => f.RoomId)
+            .ThenBy(f => f.Id)
+            .Select(SearchItemProjection)
+            .ToListAsync(ct);
+    }
+
+    // The room and the plan are taken through the navigation properties inside the projection: EF builds the JOIN itself,
+    // so no Include is needed.
+    private static readonly Expression<Func<FurnitureItem, FurnitureSearchItemDto>> SearchItemProjection = f =>
+        new FurnitureSearchItemDto(
+            f.Id, f.RoomId, f.Name, f.Category, f.Width, f.Depth, f.Width * f.Depth, f.Room!.Name, f.Room.FloorPlanId, f.Room.FloorPlan!.Name);
 
     /// <summary>Loads the room together with its objects; throws <see cref="NotFoundException"/> if the room does not exist.</summary>
     private async Task<Room> GetRoomAsync(int roomId, CancellationToken ct)
