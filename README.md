@@ -62,3 +62,21 @@ A service is registered with one of three lifetimes. Transient: a new instance o
 `AppDbContext` and `EfRepository<T>` are Scoped: each request gets its own context, and its tracked changes are saved or discarded together. A `DbContext` is not thread-safe, so it must not be shared between requests. `PlacementValidator` is a Singleton because it holds no state, and one instance can safely serve all requests.
 
 The rule: a Singleton must not depend on a Scoped service. Otherwise, the long-lived object would keep a request's context after the request has ended.
+
+## Configuration flags
+
+Startup behavior is controlled by configuration flags, not by the environment name.
+
+| Flag | Environment variable | `appsettings.json` | `appsettings.Development.json` | What it does |
+| --- | --- | --- | --- | --- |
+| `Swagger:Enabled` | `Swagger__Enabled` | `false` | `true` | Serves the Swagger UI at `/swagger`. |
+| `Database:MigrateOnStartup` | `Database__MigrateOnStartup` | `false` | `true` | Applies the EF Core migrations at startup. |
+| `Database:SeedDemoData` | `Database__SeedDemoData` | `false` | `true` | Adds the demo plan "Apartment" to an empty database (after the migration). |
+
+## Data model
+
+```mermaid
+erDiagram
+    floor_plans ||--o{ rooms : contains
+    rooms ||--o{ plan_objects : contains
+```

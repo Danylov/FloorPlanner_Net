@@ -38,6 +38,15 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
     await db.Database.MigrateAsync(app.Lifetime.ApplicationStopping);
 }
 
+// Startup step: if the Database:SeedDemoData flag is on, fill an empty database with the demo plan (after the migration).
+if (app.Configuration.GetValue<bool>("Database:SeedDemoData"))
+{
+    using IServiceScope scope = app.Services.CreateScope();
+    AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    await SeedData.InitializeAsync(db, app.Lifetime.ApplicationStopping);
+}
+
 // Middleware code starts here: the components of the request pipeline, which run in the order they are added.
 // Pipeline order: the exception handler goes first so that it catches exceptions thrown by every later layer;
 // then Swagger; then the controllers.
