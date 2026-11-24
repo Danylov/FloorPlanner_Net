@@ -1,4 +1,5 @@
 using FloorPlanner.Api.Dtos;
+using FloorPlanner.Api.Services;
 using FloorPlanner.Core.Abstractions;
 using FloorPlanner.Core.Domain;
 using FloorPlanner.Core.Exceptions;
@@ -8,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 namespace FloorPlanner.Api.Controllers;
 
 /// <summary>CRUD operations for floor plans.</summary>
+/// <param name="plans">The repository of floor plans: it reads, adds, changes and deletes the plans in the database. It is passed by the DI container.</param>
+/// <param name="summaries">The service that builds the summary of a plan (rooms, furniture, statistics) for the <c>summary</c> endpoint. It is passed by the DI container.</param>
 // Why the actions return Task<ActionResult<T>> and not just T:
 //
 // - Task: the action is asynchronous. It reads the database with ToListAsync and similar methods,
@@ -22,7 +25,7 @@ namespace FloorPlanner.Api.Controllers;
 // that returns data and can control the response status code.
 [ApiController]
 [Route("api/floorplans")]
-public sealed class FloorPlansController(IRepository<FloorPlan> plans) : ControllerBase
+public sealed class FloorPlansController(IRepository<FloorPlan> plans, IPlanSummaryService summaries) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<List<FloorPlanDto>>> GetAll(CancellationToken cancellationToken)
@@ -56,6 +59,14 @@ public sealed class FloorPlansController(IRepository<FloorPlan> plans) : Control
         FloorPlanDto dto = ToDto(plan);
 
         return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
+    }
+
+    [HttpGet("{id:int}/summary")]
+    public async Task<ActionResult<PlanSummaryDto>> GetSummary(int id, CancellationToken cancellationToken)
+    {
+        PlanSummaryDto summary = await summaries.GetAsync(id, cancellationToken);
+
+        return Ok(summary);
     }
 
     [HttpPut("{id:int}")]
