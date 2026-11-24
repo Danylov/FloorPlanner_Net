@@ -80,3 +80,32 @@ erDiagram
     floor_plans ||--o{ rooms : contains
     rooms ||--o{ plan_objects : contains
 ```
+
+## SQL
+
+The report `GET /api/reports/room-footprint` is built with a raw SQL query (`src/FloorPlanner.Api/sql/report.sql`). For every plan it shows the rooms that have at least 0.5 m² of furniture footprint, with the number of furniture items, the total footprint and the rank of the room in its plan.
+
+```sql
+SELECT fp.name AS plan_name,
+       r.name  AS room_name,
+       COUNT(po.id) AS furniture_count,
+       ROUND(SUM(po.width * po.depth)::numeric, 2)::float8 AS total_footprint,
+       RANK() OVER (PARTITION BY fp.id ORDER BY SUM(po.width * po.depth) DESC) AS rank_in_plan
+FROM floor_plans fp
+JOIN rooms r ON r.floor_plan_id = fp.id
+JOIN plan_objects po ON po.room_id = r.id
+WHERE po.kind = 'furniture'
+GROUP BY fp.id, fp.name, r.id, r.name
+HAVING SUM(po.width * po.depth) >= 0.5
+ORDER BY fp.name, rank_in_plan, r.name;
+```
+
+What each part does:
+
+- **`JOIN`**: connects the three tables by the foreign keys: every plan with its rooms (`rooms.floor_plan_id`), and every room with its objects (`plan_objects.room_id`). A room without objects has no matching rows, so it does not appear in the result.
+- **`WHERE po.kind = 'furniture'`**: keeps only furniture before grouping; doors and windows (other values of the `kind` discriminator) are dropped.
+- **`GROUP BY`**: collapses the rows into one row per room, so the aggregate functions (`COUNT`, `SUM`) are calculated for each room separately.
+- **`COUNT` and `SUM`**: the number of furniture items and the total footprint (`width * depth`) of a room. `ROUND(...::numeric, 2)::float8` rounds the sum to 2 decimals and converts it back to a floating point number.
+- **`HAVING`**: filters the groups after the aggregation (unlike `WHERE`, which filters rows before it): rooms with a total footprint below 0.5 m² are dropped.
+- **Window function `RANK() OVER (PARTITION BY fp.id ORDER BY ... DESC)`**: ranks the rooms inside each plan (`PARTITION BY fp.id`) by the total footprint, the largest first. Rooms with equal footprints get the same rank, and the next rank is skipped. Unlike `GROUP BY`, a window function does not collapse the rows.
+- **`ORDER BY`**: sorts the result by the plan name, then by the rank, then by the room name.
