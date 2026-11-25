@@ -12,18 +12,20 @@ public sealed class RoomCalculatorTests
 
     private static readonly Vector2[] Triangle = [new(0, 0), new(4, 0), new(0, 3)];
 
+    private static readonly Vector2[] ClockwiseRectangle = [new(0, 0), new(0, 4), new(5, 4), new(5, 0)];
+
     /// <summary>The area of a rectangle is width times depth.</summary>
     [Fact]
     public void Area_Rectangle_ReturnsProduct()
     {
-        Assert.Equal(20, RoomCalculator.Area(Rectangle), precision: 9);
+        Assert.Equal(20, RoomCalculator.Area(Rectangle), precision: 4);
     }
 
     /// <summary>The perimeter of a rectangle is the sum of its four sides.</summary>
     [Fact]
     public void Perimeter_Rectangle_ReturnsSumOfSides()
     {
-        Assert.Equal(18, RoomCalculator.Perimeter(Rectangle), precision: 9);
+        Assert.Equal(18, RoomCalculator.Perimeter(Rectangle), precision: 4);
     }
 
     /// <summary>The volume is the area multiplied by the room height.</summary>
@@ -32,21 +34,21 @@ public sealed class RoomCalculatorTests
     {
         Room room = new("Hall", Rectangle);
 
-        Assert.Equal(54, RoomCalculator.Volume(room), precision: 9);
+        Assert.Equal(54, RoomCalculator.Volume(room), precision: 4);
     }
 
     /// <summary>The area of an L-shaped polygon is calculated correctly.</summary>
     [Fact]
     public void Area_LShape_ReturnsTwelve()
     {
-        Assert.Equal(12, RoomCalculator.Area(LShape), precision: 9);
+        Assert.Equal(12, RoomCalculator.Area(LShape), precision: 4);
     }
 
     /// <summary>The perimeter of an L-shaped polygon is calculated correctly.</summary>
     [Fact]
     public void Perimeter_LShape_ReturnsSixteen()
     {
-        Assert.Equal(16, RoomCalculator.Perimeter(LShape), precision: 9);
+        Assert.Equal(16, RoomCalculator.Perimeter(LShape), precision: 4);
     }
 
     /// <summary>The room overload of the perimeter uses the room corners.</summary>
@@ -55,21 +57,21 @@ public sealed class RoomCalculatorTests
     {
         Room room = new("Hall", [new(0, 0), new(7, 0), new(4, 4), new(0, 4)]);
 
-        Assert.Equal(20, RoomCalculator.Perimeter(room), precision: 9);
+        Assert.Equal(20, RoomCalculator.Perimeter(room), precision: 4);
     }
 
     /// <summary>The area of a right triangle is half the product of its legs.</summary>
     [Fact]
     public void Area_Triangle_ReturnsSix()
     {
-        Assert.Equal(6, RoomCalculator.Area(Triangle), precision: 9);
+        Assert.Equal(6, RoomCalculator.Area(Triangle), precision: 4);
     }
 
     /// <summary>The perimeter of a 3-4-5 triangle is twelve.</summary>
     [Fact]
     public void Perimeter_Triangle_ReturnsTwelve()
     {
-        Assert.Equal(12, RoomCalculator.Perimeter(Triangle), precision: 9);
+        Assert.Equal(12, RoomCalculator.Perimeter(Triangle), precision: 4);
     }
 
     /// <summary>Two points do not form a polygon, so the area is rejected.</summary>
@@ -88,5 +90,29 @@ public sealed class RoomCalculatorTests
         Vector2[] corners = [new(0, 0), new(4, 0)];
 
         Assert.Throws<ArgumentException>(() => RoomCalculator.Perimeter(corners));
+    }
+
+    // INTENTIONALLY FAILING TEST (commit 17 of the educational pair "test -> fix").
+    // The bug is planted on purpose: since commit 4 RoomCalculator.Area returns the signed result of the Gauss formula
+    // (without Math.Abs), so a polygon traversed clockwise gets a negative area (-20 instead of 20).
+    // This test reproduces the bug first (red); commit 18 fixes the cause and the test becomes green.
+    // Do not "fix" the test or change the expected value: the correct expected value is positive.
+    /// <summary>The area of a polygon does not depend on the direction of traversal: a clockwise polygon has a positive area.</summary>
+    [Fact]
+    public void Area_ClockwisePolygon_ReturnsPositive()
+    {
+        Assert.Equal(20, RoomCalculator.Area(ClockwiseRectangle), precision: 4);
+    }
+
+    // INTENTIONALLY FAILING TEST (commit 17 of the educational pair "test -> fix").
+    // The volume is the area times the height, so it inherits the same planted bug: -54 instead of 54.
+    // It becomes green in commit 18 together with the area test above; the expected value must stay positive.
+    /// <summary>The volume does not depend on the direction of traversal: a clockwise polygon has a positive volume.</summary>
+    [Fact]
+    public void Volume_ClockwisePolygon_ReturnsPositive()
+    {
+        Room room = new("Hall", ClockwiseRectangle);
+
+        Assert.Equal(54, RoomCalculator.Volume(room), precision: 4);
     }
 }

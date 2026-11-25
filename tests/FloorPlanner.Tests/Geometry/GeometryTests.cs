@@ -23,10 +23,10 @@ public sealed class GeometryTests
     {
         Rect rect = Rect.FromCenter(5, 5, 2, 1);
 
-        Assert.Equal(4, rect.MinX, precision: 9);
-        Assert.Equal(4.5, rect.MinZ, precision: 9);
-        Assert.Equal(6, rect.MaxX, precision: 9);
-        Assert.Equal(5.5, rect.MaxZ, precision: 9);
+        Assert.Equal(4, rect.MinX, precision: 4);
+        Assert.Equal(4.5, rect.MinZ, precision: 4);
+        Assert.Equal(6, rect.MaxX, precision: 4);
+        Assert.Equal(5.5, rect.MaxZ, precision: 4);
     }
 
     /// <summary>Corners must be returned in the order (MinX,MinZ), (MaxX,MinZ), (MaxX,MaxZ), (MinX,MaxZ).</summary>

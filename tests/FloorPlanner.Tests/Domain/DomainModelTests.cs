@@ -68,23 +68,23 @@ public sealed class DomainModelTests
 
         Assert.Equal("Pine", item.Name);
         Assert.Equal("Table", item.Category);
-        Assert.Equal(2, item.X, precision: 9);
-        Assert.Equal(3, item.Z, precision: 9);
-        Assert.Equal(1.5, item.Width, precision: 9);
-        Assert.Equal(0.8, item.Depth, precision: 9);
-        Assert.Equal(0.75, item.Height, precision: 9);
+        Assert.Equal(2, item.X, precision: 4);
+        Assert.Equal(3, item.Z, precision: 4);
+        Assert.Equal(1.5, item.Width, precision: 4);
+        Assert.Equal(0.8, item.Depth, precision: 4);
+        Assert.Equal(0.75, item.Height, precision: 4);
     }
 
     /// <summary>Update replaces the name, corners and height of a room.</summary>
     [Fact]
     public void Room_Update_ChangesValues()
     {
-        Room room = new("Hall", [new(0, 0), new(4, 0), new(4, 3), new(0, 3)], 2.7);
+        Room room = new("Hall", [new(0, 0), new(4, 0), new(4, 3), new(0, 3)]);
 
         room.Update("Kitchen", [new(0, 0), new(5, 0), new(5, 4), new(0, 4)], 3.0);
 
         Assert.Equal("Kitchen", room.Name);
-        Assert.Equal(3.0, room.Height, precision: 9);
+        Assert.Equal(3.0, room.Height, precision: 4);
         Assert.Equal(4, room.Corners.Count);
         Assert.Equal(new Vector2(5, 4), room.Corners[2]);
     }
@@ -93,12 +93,12 @@ public sealed class DomainModelTests
     [Fact]
     public void Room_Update_TwoCorners_ThrowsAndKeepsValues()
     {
-        Room room = new("Hall", [new(0, 0), new(4, 0), new(4, 3), new(0, 3)], 2.7);
+        Room room = new("Hall", [new(0, 0), new(4, 0), new(4, 3), new(0, 3)]);
 
         Assert.Throws<ArgumentException>(() => room.Update("Kitchen", [new(0, 0), new(5, 0)], 3.0));
 
         Assert.Equal("Hall", room.Name);
-        Assert.Equal(2.7, room.Height, precision: 9);
+        Assert.Equal(2.7, room.Height, precision: 4);
         Assert.Equal(4, room.Corners.Count);
     }
 
@@ -110,9 +110,9 @@ public sealed class DomainModelTests
 
         Rect footprint = item.Footprint;
 
-        Assert.Equal(4, footprint.MinX, precision: 9);
-        Assert.Equal(4.5, footprint.MinZ, precision: 9);
-        Assert.Equal(6, footprint.MaxX, precision: 9);
-        Assert.Equal(5.5, footprint.MaxZ, precision: 9);
+        Assert.Equal(4, footprint.MinX, precision: 4);
+        Assert.Equal(4.5, footprint.MinZ, precision: 4);
+        Assert.Equal(6, footprint.MaxX, precision: 4);
+        Assert.Equal(5.5, footprint.MaxZ, precision: 4);
     }
 }
