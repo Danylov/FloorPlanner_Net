@@ -92,11 +92,8 @@ public sealed class RoomCalculatorTests
         Assert.Throws<ArgumentException>(() => RoomCalculator.Perimeter(corners));
     }
 
-    // INTENTIONALLY FAILING TEST (commit 17 of the educational pair "test -> fix").
-    // The bug is planted on purpose: since commit 4 RoomCalculator.Area returns the signed result of the Gauss formula
-    // (without Math.Abs), so a polygon traversed clockwise gets a negative area (-20 instead of 20).
-    // This test reproduces the bug first (red); commit 18 fixes the cause and the test becomes green.
-    // Do not "fix" the test or change the expected value: the correct expected value is positive.
+    // Commit 17 of the educational pair "test -> fix" added this test as a failing one: a clockwise polygon had
+    // a negative area (-20 instead of 20). The bug is fixed in commit 18 (Area returns Math.Abs of the signed area).
     /// <summary>The area of a polygon does not depend on the direction of traversal: a clockwise polygon has a positive area.</summary>
     [Fact]
     public void Area_ClockwisePolygon_ReturnsPositive()
@@ -104,9 +101,8 @@ public sealed class RoomCalculatorTests
         Assert.Equal(20, RoomCalculator.Area(ClockwiseRectangle), precision: 4);
     }
 
-    // INTENTIONALLY FAILING TEST (commit 17 of the educational pair "test -> fix").
-    // The volume is the area times the height, so it inherits the same planted bug: -54 instead of 54.
-    // It becomes green in commit 18 together with the area test above; the expected value must stay positive.
+    // Commit 17 of the educational pair "test -> fix" added this test as a failing one (the volume was -54 instead of 54,
+    // because of the negative area). It is green since the fix in commit 18.
     /// <summary>The volume does not depend on the direction of traversal: a clockwise polygon has a positive volume.</summary>
     [Fact]
     public void Volume_ClockwisePolygon_ReturnsPositive()
@@ -114,5 +110,33 @@ public sealed class RoomCalculatorTests
         Room room = new("Hall", ClockwiseRectangle);
 
         Assert.Equal(54, RoomCalculator.Volume(room), precision: 4);
+    }
+
+    /// <summary>The signed area of a counter-clockwise polygon is positive.</summary>
+    [Fact]
+    public void SignedArea_CounterClockwisePolygon_ReturnsPositive()
+    {
+        Assert.Equal(20, RoomCalculator.SignedArea(Rectangle), precision: 4);
+    }
+
+    /// <summary>The signed area of a clockwise polygon is negative.</summary>
+    [Fact]
+    public void SignedArea_ClockwisePolygon_ReturnsNegative()
+    {
+        Assert.Equal(-20, RoomCalculator.SignedArea(ClockwiseRectangle), precision: 4);
+    }
+
+    /// <summary>A counter-clockwise polygon is not clockwise.</summary>
+    [Fact]
+    public void IsClockwise_CounterClockwisePolygon_ReturnsFalse()
+    {
+        Assert.False(RoomCalculator.IsClockwise(Rectangle));
+    }
+
+    /// <summary>A clockwise polygon is clockwise.</summary>
+    [Fact]
+    public void IsClockwise_ClockwisePolygon_ReturnsTrue()
+    {
+        Assert.True(RoomCalculator.IsClockwise(ClockwiseRectangle));
     }
 }
