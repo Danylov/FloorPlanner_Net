@@ -3,7 +3,7 @@
 > This is an **educational** debugging case (commits 17 and 18 of the project): the bug was planted on purpose
 > (`Math.Abs` was left out of `RoomCalculator.Area` in commit 4), it is not a real production incident.
 > The numbers in "Symptom" and "Reproduction" were taken from the running API before the fix; the numbers in
-> "How it was found" were seen by the author in a debugging session in Rider.
+> "How it was found" were seen by me in a debugging session in Rider.
 
 ## Symptom
 
