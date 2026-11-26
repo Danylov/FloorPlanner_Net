@@ -16,5 +16,19 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build: .
+    container_name: floorplanner-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - ConnectionStrings__Default=Host=db;Port=5432;Database=floorplanner;Username=floorplanner;Password=floorplanner_dev
+      - Swagger__Enabled=true
+      - Database__MigrateOnStartup=true
+      - Database__SeedDemoData=true
+    ports:
+      - "5080:8080"
+
 volumes:
   pgdata:

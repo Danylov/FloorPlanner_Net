@@ -4,26 +4,19 @@ A REST API for managing floor plans (rooms, doors, windows, furniture) with auto
 
 ## How to try the application (step by step)
 
-No programming knowledge is needed. The instructions are for Windows 10 or 11; the first start takes about 15–20 minutes, mostly because of the downloads. An internet connection is required.
+No programming knowledge is needed, and the .NET SDK does not have to be installed. The instructions are for Windows 10 or 11; the first start takes about 10 to 15 minutes, mostly because of the downloads. An internet connection is required.
 
-1. **Install Docker Desktop** (it runs the database): https://www.docker.com/products/docker-desktop/. Start it and wait until its window shows **Engine running**.
-2. **Install the .NET 11 SDK** (it builds and runs the application): https://dotnet.microsoft.com/download/dotnet/11.0. Choose the **SDK**, the installer for Windows x64.
-3. **Download the project**: on its GitHub page press the green button **Code**, then **Download ZIP**. Right-click the downloaded file and choose **Extract All**.
-4. **Open a command window in the project folder**: open the extracted folder in File Explorer (the right folder contains the file `docker-compose.yml`), click the address bar at the top, type `cmd` and press **Enter**.
-5. **Start the database**: type the command below and press **Enter**. Wait until the command finishes.
-
-   ```bash
-   docker compose up -d db
-   ```
-
-6. **Start the application**: type the command below and press **Enter**. Wait for the line `Now listening on: http://localhost:5080` and leave this window open.
+1. **Install Docker Desktop** (it runs the database and the application): https://www.docker.com/products/docker-desktop/. Start it and wait until its window shows **Engine running**.
+2. **Download the project**: on its GitHub page press the green button **Code**, then **Download ZIP**. Right-click the downloaded file and choose **Extract All**.
+3. **Open a command window in the project folder**: open the extracted folder in File Explorer (the right folder contains the file `docker-compose.yml`), click the address bar at the top, type `cmd` and press **Enter**.
+4. **Start everything with one command**: type it and press **Enter**. Wait for the line `Application started` and leave this window open.
 
    ```bash
-   dotnet run --project src/FloorPlanner.Api
+   docker compose up --build
    ```
 
-7. **Open the demo page** in a browser: http://localhost:5080. It already shows a ready floor plan "Apartment" with two furnished rooms.
-8. **Try it** (details in "Demo UI" below):
+5. **Open the demo page** in a browser: http://localhost:5080. It already shows a ready floor plan "Apartment" with two furnished rooms.
+6. **Try it** (details in "Demo UI" below):
    1. look at the tables **Plan summary** and **Furniture in plan**;
    2. in the section **Add furniture** press **Fill valid example**, then **Add furniture**: a green message "Created" appears;
    3. press **Fill overlapping example**, then **Add furniture**: a red message says that the furniture overlaps another item;
@@ -31,16 +24,44 @@ No programming knowledge is needed. The instructions are for Windows 10 or 11; t
    5. press **Delete** next to the item that you have added;
    6. in the section **Search furniture** type `chair` and press **Search**;
    7. optionally, open http://localhost:5080/swagger to see all the requests that the application offers.
-9. **Stop the application**: click the command window and press **Ctrl+C**, then type `docker compose down` to stop the database. Your data is kept; to delete it and start with the initial data again, type `docker compose down -v` instead.
+7. **Stop the application**: click the command window and press **Ctrl+C**, then type `docker compose down`. Your data is kept; to delete it and start with the initial data again, type `docker compose down -v` instead.
 
 ### If something goes wrong
 
 | What you see | What to do |
 | --- | --- |
-| `docker` or `dotnet` "is not recognized" | The program is not installed, or the command window was opened before the installation. Install it, close the window and repeat step 4. |
-| An error mentioning `dockerDesktopLinuxEngine` | Docker Desktop is not running. Start it, wait for **Engine running** and repeat step 5. |
-| `Failed to connect to 127.0.0.1:5432` | The database is not running. Repeat step 5, wait about half a minute and repeat step 6. |
-| `address already in use` or `port is already allocated` | Another program uses the port 5080 or 5432 (for example, a locally installed PostgreSQL, or the application is already running). Close that program and try again. |
+| `docker` "is not recognized" | Docker Desktop is not installed, or the command window was opened before the installation. Install it, close the window and repeat step 3. |
+| An error mentioning `dockerDesktopLinuxEngine` | Docker Desktop is not running. Start it, wait for **Engine running** and repeat step 4. |
+| `port is already allocated` or `address already in use` | Another program uses the port 5080 or 5432 (for example, a locally installed PostgreSQL, or the application is already running). Close that program and repeat step 4. |
+| The page does not open | Wait until the line `Application started` appears in the command window, then refresh the page. |
+
+## Skills shown in this project
+
+| Skill | Where to look |
+| --- | --- |
+| C#, .NET | The whole solution (.NET 11) |
+| .NET class library | `src/FloorPlanner.Core`: the domain logic without EF Core and ASP.NET dependencies |
+| ASP.NET Core | `src/FloorPlanner.Api` |
+| REST API | `src/FloorPlanner.Api/Controllers` and `Endpoints`; all the requests are listed in Swagger |
+| Minimal API | `src/FloorPlanner.Api/Endpoints` (furniture CRUD, search, furniture of a plan) |
+| Routing | Attribute routes in `Controllers`, route groups in `Endpoints`, route constraints (`{id:int}`) and nested routes (`api/floorplans/{planId}/rooms`) |
+| CRUD applications | Floor plans and rooms (`Controllers`), furniture (`Endpoints/FurnitureEndpoints.cs`) |
+| Middleware | `src/FloorPlanner.Api/Middleware/ExceptionHandlingMiddleware.cs` |
+| Dependency injection (DI) and Inversion of Control (IoC) | Registrations in `Program.cs`, constructor injection in controllers and services, test doubles in `tests/FloorPlanner.Tests/Helpers` (see "DI and IoC") |
+| Object-oriented programming and design | `src/FloorPlanner.Core/Domain`: inheritance and polymorphism (`PlanObject` and `FurnitureItem`, `Door`, `Window`), encapsulation, abstractions (interfaces) |
+| Generic programming | `IRepository<T>`, `EfRepository<T>`, `PagedResult<T>` |
+| Data structures and collections | Polygons of rooms as lists of points (`Geometry`), grouping and sorting in `Services/PlanSummaryService.cs` |
+| Exception handling, debugging, troubleshooting | Domain exceptions in `Core/Exceptions`, the exception middleware, a debugging case in [docs/debugging.md](docs/debugging.md) |
+| Entity Framework Core (EF Core) | `src/FloorPlanner.Api/Data`: Fluent API configurations, relationships, table-per-hierarchy inheritance, migrations, eager loading |
+| Relational database design, PostgreSQL | The tables and foreign keys (see "Database" and "Data model") |
+| LINQ | `Services/FurnitureService.cs` (search with filtering, sorting and paging), `Services/PlanSummaryService.cs` |
+| SQL | `src/FloorPlanner.Api/sql/report.sql`: `JOIN`, `GROUP BY`, `HAVING`, a window function (see "SQL") |
+| JavaScript | The demo page, `src/FloorPlanner.Api/wwwroot/app.js` (`fetch`, no frameworks) |
+| Git | The history of the repository: one commit for every step of the roadmap |
+| Docker | `Dockerfile` (multi-stage build, non-root user) and `docker-compose.yml` (the database and the application) |
+| `async`/`await` and `CancellationToken` | All database and file access is asynchronous; the token goes from the request down to the SQL command (see "Async and cancellation") |
+| Unit tests (xUnit) | `tests/FloorPlanner.Tests`: the domain logic, the middleware, the service with hand-written test doubles, the static page (`dotnet test`) |
+| Swagger (OpenAPI) | Swashbuckle: the description of all endpoints and Swagger UI (see "API documentation (Swagger)") |
 
 ## Roadmap
 
@@ -52,12 +73,28 @@ No programming knowledge is needed. The instructions are for Windows 10 or 11; t
 
 ## Run
 
+There are two ways. Do not use both at the same time: they use the same port 5080.
+
+**1. With one command** (only Docker is needed, no .NET SDK):
+
+```bash
+docker compose up --build
+```
+
+Then open http://localhost:5080 (the demo page) or http://localhost:5080/swagger. Press Ctrl+C to stop; `docker compose down -v` stops the containers and resets the data.
+
+**2. For development** (the .NET 11 SDK is needed): the database runs in Docker, the application on your computer.
+
 ```bash
 docker compose up -d db
 dotnet run --project src/FloorPlanner.Api
 ```
 
-Then open the demo page at http://localhost:5080 (see "Demo UI") or the Swagger UI at http://localhost:5080/swagger.
+If the application container of the first way is running, stop it first: `docker compose stop api`.
+
+## Async and cancellation
+
+When a client closes the connection, ASP.NET Core cancels the `HttpContext.RequestAborted` token of the request, and this token is what the `CancellationToken` parameter of a controller action or a Minimal API handler receives. The action passes it to the service, the service passes it on to the repository and EF Core (`ToListAsync(ct)`, `SaveChangesAsync(ct)`), and the Npgsql driver cancels the SQL command that is running in PostgreSQL. EF Core then throws `OperationCanceledException`, which `ExceptionHandlingMiddleware` turns into the status 499 without a body and logs as information, so a cancelled request is not reported as a server error.
 
 ## API documentation (Swagger)
 
@@ -115,7 +152,7 @@ Startup behavior is controlled by configuration flags, not by the environment na
 | `Database:MigrateOnStartup` | `Database__MigrateOnStartup` | `false` | `true` | Applies the EF Core migrations at startup. |
 | `Database:SeedDemoData` | `Database__SeedDemoData` | `false` | `true` | Adds the demo plan "Apartment" to an empty database (after the migration). |
 
-The demo plan "Apartment" (the Living room 7 x 5 m and the Bedroom 5 x 4 m, 19 pieces of furniture, a door and a window) is added only to an **empty** database. If the database already has a plan from an earlier version, reset it to get the current demo data: `docker compose down -v`, then `docker compose up -d db` and start the application again.
+The demo plan "Apartment" (the Living room 7 x 5 m and the Bedroom 5 x 4 m, 19 pieces of furniture, a door and a window) is added only to an **empty** database. If the database already has a plan from an earlier version, reset it to get the current demo data: `docker compose down -v`, then start the application again (see "Run").
 
 ## Data model
 
