@@ -1,0 +1,163 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.5;
+    color: #222;
+    background: #f4f5f7;
+}
+
+main,
+footer {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+h1 {
+    margin-top: 24px;
+}
+
+section {
+    margin: 16px 0;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid #dde1e6;
+    border-radius: 8px;
+}
+
+section h2,
+section h3 {
+    margin-top: 0;
+}
+
+label {
+    display: inline-block;
+    margin-right: 8px;
+}
+
+input,
+select {
+    padding: 4px 6px;
+    font: inherit;
+}
+
+.fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.fields label {
+    display: flex;
+    flex-direction: column;
+    margin-right: 0;
+}
+
+button {
+    padding: 6px 12px;
+    font: inherit;
+    color: #fff;
+    background: #2f6fed;
+    border: 0;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1f58c7;
+}
+
+button[type="button"] {
+    background: #5b6573;
+}
+
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 6px 8px;
+    text-align: left;
+    border-bottom: 1px solid #e5e8ec;
+}
+
+tbody tr:nth-child(even) {
+    background: #f7f8fa;
+}
+
+dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 4px 16px;
+    margin: 0 0 12px;
+}
+
+dt {
+    font-weight: 600;
+}
+
+dd {
+    margin: 0;
+}
+
+.error {
+    padding: 8px 12px;
+    margin: 8px 0;
+    background: #fdf2f2;
+    border: 2px solid #d93025;
+    border-radius: 4px;
+}
+
+.ok {
+    padding: 8px 12px;
+    margin: 8px 0;
+    background: #f1faf3;
+    border: 2px solid #1e8e3e;
+    border-radius: 4px;
+}
+
+.muted {
+    color: #6b7280;
+}
+
+footer {
+    margin-bottom: 24px;
+}
+
+pre {
+    max-height: 260px;
+    overflow: auto;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #dde1e6;
+    border-radius: 4px;
+}
+
+/* Narrow screens (down to 360 px): tables scroll sideways instead of breaking the layout. */
+@media (max-width: 600px) {
+    section {
+        padding: 12px;
+        overflow-x: auto;
+    }
+
+    .fields label {
+        width: 100%;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+    }
+}

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FloorPlanner API demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+    <h1>FloorPlanner API demo</h1>
+    <p>
+        This is a REST API built with ASP.NET Core, EF Core and PostgreSQL for managing floor plans, rooms and furniture.
+        This page only calls the API: everything you see here comes from its endpoints.
+    </p>
+    <p>
+        <a href="/swagger">Swagger</a> · <a href="/health">Health</a>
+    </p>
+
+    <p>
+        <label for="plan-select">Floor plan</label>
+        <select id="plan-select"></select>
+    </p>
+
+    <section>
+        <h2>Plan summary</h2>
+        <div id="summary-result"></div>
+    </section>
+
+    <section>
+        <h2>Furniture in plan</h2>
+        <div id="plan-furniture"></div>
+    </section>
+
+    <section>
+        <h2>Add furniture</h2>
+        <form id="furniture-form">
+            <p>
+                <label for="room-select">Room</label>
+                <select id="room-select"></select>
+            </p>
+            <div class="fields">
+                <label>Name <input name="name" type="text" maxlength="100" required></label>
+                <label>Category <input name="category" type="text" maxlength="50" required></label>
+                <label>Existing categories <select id="category-select"></select></label>
+                <label>X (m) <input name="x" type="number" step="0.05" required></label>
+                <label>Z (m) <input name="z" type="number" step="0.05" required></label>
+                <label>Width (m) <input name="width" type="number" step="0.05" required></label>
+                <label>Depth (m) <input name="depth" type="number" step="0.05" required></label>
+                <label>Height (m) <input name="height" type="number" step="0.05" required></label>
+            </div>
+            <p class="buttons">
+                <button type="submit">Add furniture</button>
+                <button type="button" id="fill-valid">Fill valid example</button>
+                <button type="button" id="fill-overlapping">Fill overlapping example</button>
+                <button type="button" id="fill-outside">Fill outside example</button>
+            </p>
+        </form>
+        <div id="furniture-result"></div>
+        <h3>Furniture in the selected room</h3>
+        <div id="furniture-list"></div>
+    </section>
+
+    <section>
+        <h2>Search furniture</h2>
+        <form id="search-form">
+            <label>Category <input name="category" type="text" placeholder="for example, chair"></label>
+            <label>Existing categories <select id="search-category-select"></select></label>
+            <button type="submit">Search</button>
+        </form>
+        <div id="search-result"></div>
+    </section>
+</main>
+
+<footer>
+    <details open>
+        <summary>Last request</summary>
+        <p id="status"></p>
+        <pre id="raw-json"></pre>
+    </details>
+</footer>
+
+<script src="app.js" defer></script>
+</body>
+</html>

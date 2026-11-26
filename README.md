@@ -2,6 +2,46 @@
 
 A REST API for managing floor plans (rooms, doors, windows, furniture) with automatic validation of furniture placement. Built with ASP.NET Core 11, EF Core and PostgreSQL. The pure domain logic (geometry, area calculation, placement rules) lives in a separate library with no framework dependencies.
 
+## How to try the application (step by step)
+
+No programming knowledge is needed. The instructions are for Windows 10 or 11; the first start takes about 15–20 minutes, mostly because of the downloads. An internet connection is required.
+
+1. **Install Docker Desktop** (it runs the database): https://www.docker.com/products/docker-desktop/. Start it and wait until its window shows **Engine running**.
+2. **Install the .NET 11 SDK** (it builds and runs the application): https://dotnet.microsoft.com/download/dotnet/11.0. Choose the **SDK**, the installer for Windows x64.
+3. **Download the project**: on its GitHub page press the green button **Code**, then **Download ZIP**. Right-click the downloaded file and choose **Extract All**.
+4. **Open a command window in the project folder**: open the extracted folder in File Explorer (the right folder contains the file `docker-compose.yml`), click the address bar at the top, type `cmd` and press **Enter**.
+5. **Start the database**: type the command below and press **Enter**. Wait until the command finishes.
+
+   ```bash
+   docker compose up -d db
+   ```
+
+6. **Start the application**: type the command below and press **Enter**. Wait for the line `Now listening on: http://localhost:5080` and leave this window open.
+
+   ```bash
+   dotnet run --project src/FloorPlanner.Api
+   ```
+
+7. **Open the demo page** in a browser: http://localhost:5080. It already shows a ready floor plan "Apartment" with two furnished rooms.
+8. **Try it** (details in "Demo UI" below):
+   1. look at the tables **Plan summary** and **Furniture in plan**;
+   2. in the section **Add furniture** press **Fill valid example**, then **Add furniture**: a green message "Created" appears;
+   3. press **Fill overlapping example**, then **Add furniture**: a red message says that the furniture overlaps another item;
+   4. press **Fill outside example**, then **Add furniture**: a red message says that the furniture is outside the room;
+   5. press **Delete** next to the item that you have added;
+   6. in the section **Search furniture** type `chair` and press **Search**;
+   7. optionally, open http://localhost:5080/swagger to see all the requests that the application offers.
+9. **Stop the application**: click the command window and press **Ctrl+C**, then type `docker compose down` to stop the database. Your data is kept; to delete it and start with the initial data again, type `docker compose down -v` instead.
+
+### If something goes wrong
+
+| What you see | What to do |
+| --- | --- |
+| `docker` or `dotnet` "is not recognized" | The program is not installed, or the command window was opened before the installation. Install it, close the window and repeat step 4. |
+| An error mentioning `dockerDesktopLinuxEngine` | Docker Desktop is not running. Start it, wait for **Engine running** and repeat step 5. |
+| `Failed to connect to 127.0.0.1:5432` | The database is not running. Repeat step 5, wait about half a minute and repeat step 6. |
+| `address already in use` or `port is already allocated` | Another program uses the port 5080 or 5432 (for example, a locally installed PostgreSQL, or the application is already running). Close that program and try again. |
+
 ## Roadmap
 
 - **A. Core** — OOP domain model and geometry (no database)
@@ -16,6 +56,8 @@ A REST API for managing floor plans (rooms, doors, windows, furniture) with auto
 docker compose up -d db
 dotnet run --project src/FloorPlanner.Api
 ```
+
+Then open the demo page at http://localhost:5080 (see "Demo UI") or the Swagger UI at http://localhost:5080/swagger.
 
 ## API documentation (Swagger)
 
@@ -73,6 +115,8 @@ Startup behavior is controlled by configuration flags, not by the environment na
 | `Database:MigrateOnStartup` | `Database__MigrateOnStartup` | `false` | `true` | Applies the EF Core migrations at startup. |
 | `Database:SeedDemoData` | `Database__SeedDemoData` | `false` | `true` | Adds the demo plan "Apartment" to an empty database (after the migration). |
 
+The demo plan "Apartment" (the Living room 7 x 5 m and the Bedroom 5 x 4 m, 19 pieces of furniture, a door and a window) is added only to an **empty** database. If the database already has a plan from an earlier version, reset it to get the current demo data: `docker compose down -v`, then `docker compose up -d db` and start the application again.
+
 ## Data model
 
 ```mermaid
@@ -109,3 +153,59 @@ What each part does:
 - **`HAVING`**: filters the groups after the aggregation (unlike `WHERE`, which filters rows before it): rooms with a total footprint below 0.5 m² are dropped.
 - **Window function `RANK() OVER (PARTITION BY fp.id ORDER BY ... DESC)`**: ranks the rooms inside each plan (`PARTITION BY fp.id`) by the total footprint, the largest first. Rooms with equal footprints get the same rank, and the next rank is skipped. Unlike `GROUP BY`, a window function does not collapse the rows.
 - **`ORDER BY`**: sorts the result by the plan name, then by the rank, then by the room name.
+
+## Demo UI
+
+Start the application (see Run) and open http://localhost:5080. The page is a single static HTML page (`wwwroot/index.html` with `style.css` and `app.js`; no frameworks, no CDN, no build). It only calls the API, and the data is shown as soon as the page is opened.
+
+### Screenshots
+
+**Plan summary**: the totals of the plan, the statistics by category and the five largest items.
+
+![Plan summary](docs/ui-summary.png)
+
+**Furniture in plan**: all the furniture of the plan with the room of every item.
+
+![Furniture in plan](docs/ui-furniture-in-plan.png)
+
+**Add furniture**: the form with the list of existing categories, the three examples, the green block after a successful add and the furniture of the selected room.
+
+![Add furniture](docs/ui-add-furniture.png)
+
+**Search furniture and the last request**: the found items with their room and plan, and the raw JSON of the last call to the API. The page shows only the first page of the results (10 items, sorted by name); the API itself supports paging, sorting and filtering (`page`, `pageSize`, `sort`, `category`), for example `GET /api/furniture?page=2&pageSize=10` (try it in Swagger).
+
+![Search furniture](docs/ui-search.png)
+
+### What is on the page
+
+- **Floor plan**: the list of the plans. Choosing a plan reloads its summary, furniture and rooms.
+- **Plan summary**: the number of rooms, the total room area, the number of furniture items, whether there are empty rooms, the statistics by category and the five largest items.
+- **Furniture in plan**: all the furniture of the plan, with the room of every item.
+- **Add furniture**:
+  - the list **Room** with the rooms of the plan and their areas (the furniture is added to the selected room);
+  - the form with the fields **Name**, **Category**, **X**, **Z**, **Width**, **Depth** and **Height** (in meters; X and Z are the center of the base of the item);
+  - the list **Existing categories** next to the **Category** field;
+  - the buttons *Add furniture* and three examples (*Fill valid example*, *Fill overlapping example*, *Fill outside example*);
+  - below the form, the table **Furniture in the selected room** with a *Delete* button for every item.
+- **Search furniture**: the field **Category** with the list **Existing categories**, the button *Search* and the table of the found items; every row shows the room and the plan of the item. The search works across all the plans.
+- **Last request** (at the bottom): the last call to the API (the method, the address, the status, the time) and the raw JSON of the answer.
+
+### The Category field and the list "Existing categories"
+
+The category is a free text: the API accepts any non-empty text of up to 50 characters, so a new category (for example, `Wine rack`) can simply be typed. To avoid typing the known ones, there is the list **Existing categories** next to the field (in the add form and in the search form):
+
+- it always contains **all** the categories of the selected plan, whatever is typed in the text field (this is why it is a separate list and not the suggestions of the text field: the browser shows only the suggestions that match the typed text);
+- choosing an item copies it into the text field, and the list returns to its first item, ready to be used again;
+- the list is rebuilt from the plan summary every time the plan or its furniture changes, so a category of a newly added item appears in it.
+
+### What you can do in a minute
+
+1. Look at the **Plan summary** and at the **Furniture in plan** table.
+2. **Add furniture** in three ways. The buttons work in the room that is selected in the list **Room** (choose the second room and press them too); they always replace the position and the sizes of the armchair (0.8 x 0.8 x 0.9 m) and fill the name and the category only if these fields are empty, so a name that you have typed is kept:
+   - *Fill valid example* looks for a free place in the selected room (inside the walls, without overlapping the furniture); then *Add furniture* gives a green block "Created", the new row appears in the lists and the summary is updated. After the armchair is added, the next press finds the next free place, and when the room is full the page shows "No free place";
+   - *Fill overlapping example* puts the armchair on the first piece of furniture of the room: a red block with `Reason: OverlapsObject`;
+   - *Fill outside example* puts the armchair outside the room, to the left of its walls: a red block with `Reason: OutsideRoom`.
+3. **Delete** the added armchairs with the *Delete* button in the table **Furniture in the selected room**.
+4. **Search furniture** by category (for example, `chair`) or choose a category in the list **Existing categories**. The page shows the first page of the results; the other pages are available through the API (`page` and `pageSize`, see Swagger).
+
+The demo data is added only to an empty database; after an update of the demo plan reset the database (see "Configuration flags").

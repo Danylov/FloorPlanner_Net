@@ -60,7 +60,7 @@ if (app.Configuration.GetValue<bool>("Database:SeedDemoData"))
 
 // Middleware code starts here: the components of the request pipeline, which run in the order they are added.
 // Pipeline order: the exception handler goes first so that it catches exceptions thrown by every later layer;
-// then Swagger; then the controllers.
+// then Swagger; then the static files (the demo page); then the endpoints.
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Configuration.GetValue<bool>("Swagger:Enabled"))
@@ -68,6 +68,10 @@ if (app.Configuration.GetValue<bool>("Swagger:Enabled"))
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// The demo page: UseDefaultFiles serves wwwroot/index.html for the address "/", UseStaticFiles serves the files of wwwroot.
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 // Registration of the endpoints (the routes that the pipeline ends with): MapControllers adds the routes of the controller
 // classes (health, floor plans, rooms); MapFurnitureEndpoints and MapFurnitureSearchEndpoints add the Minimal API routes of the furniture.

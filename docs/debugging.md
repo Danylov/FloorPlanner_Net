@@ -71,7 +71,7 @@ The sign is kept in a separate method on purpose: the direction of traversal may
 has to be non-negative.
 
 Result on the running API after the fix: the same room has `"area": 20`, and its plan has `"totalRoomArea": 20`;
-the demo plan "Apartment" still has the total area 34.
+the demo plan "Apartment" is not affected, because the corners of its rooms are listed counter-clockwise.
 
 ## Regression tests
 
